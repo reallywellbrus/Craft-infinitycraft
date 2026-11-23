@@ -1,4 +1,4 @@
-/* =========================================================
+﻿/* =========================================================
    Craft Modes — игра, редактор режимов и каталог.
    ========================================================= */
 (function () {
@@ -9,6 +9,12 @@
   const Modes = window.CraftModes;
 
   const $ = (id) => document.getElementById(id);
+  const Sound = window.CraftSound || {
+    play() {},
+    toggle() { return false; },
+    unlock() {},
+    isEnabled() { return false; },
+  };
 
   const dom = {
     brandLink: $('brandLink'),
@@ -18,6 +24,7 @@
     btnImport: $('btnImport'),
     fileInput: $('fileInput'),
     btnMenu: $('btnMenu'),
+    btnSound: $('btnSound'),
     menu: $('menu'),
     btnRecipes: $('btnRecipes'),
     recipesDialog: $('recipesDialog'),
@@ -457,6 +464,7 @@
     dom.editorBoard.classList.remove('is-dragging');
     dom.editorEmpty.hidden = false;
     updateEditorStats();
+    Sound.play('delete');
     toast('🧹', 'Стол очищен');
   }
 
@@ -468,6 +476,7 @@
     dom.playBoard.classList.remove('is-dragging');
     dom.playEmpty.hidden = false;
     updatePlayStats();
+    Sound.play('delete');
     toast('🧹', 'Стол очищен');
   }
 
@@ -493,6 +502,15 @@
     if (!dom.menu) return;
     dom.menu.hidden = true;
     dom.btnMenu.setAttribute('aria-expanded', 'false');
+  }
+
+  function updateSoundButton() {
+    if (!dom.btnSound) return;
+    const on = Sound.isEnabled();
+    dom.btnSound.textContent = on ? '🔊' : '🔇';
+    dom.btnSound.title = on ? 'Выключить звуки' : 'Включить звуки';
+    dom.btnSound.setAttribute('aria-label', on ? 'Выключить звуки' : 'Включить звуки');
+    dom.btnSound.setAttribute('aria-pressed', String(on));
   }
 
   function toggleMenu() {
@@ -757,6 +775,7 @@
       // Вернули фишку на панель — убираем её со стола, коллекция не меняется.
       if (pointInRect(event.clientX, event.clientY, panel.getBoundingClientRect())) {
         removeBoardChip(which, node);
+        Sound.play('delete');
         toast('🧹', 'Элемент убран со стола');
         return;
       }
@@ -851,6 +870,7 @@
     const same = previous === node;
     clearSelection('editor');
     if (same) return;
+    Sound.play('click');
     editor.selected = node;
     node.classList.add('is-selected');
   }
@@ -865,9 +885,11 @@
       removeBoardChip('editor', nodeA);
       removeBoardChip('editor', nodeB);
       editorAddEl(el, position.x, position.y);
+      Sound.play('success');
       toast('✅', `${el.name}`);
       return true;
     }
+    Sound.play('click');
     openCraftDialogEditor(aId, bId, nodeA, nodeB);
     return false;
   }
@@ -884,6 +906,7 @@
     const same = previous === node;
     clearSelection('play');
     if (same) return;
+    Sound.play('click');
     play.selected = node;
     node.classList.add('is-selected');
   }
@@ -1020,6 +1043,7 @@
     craft.nodes = [];
     const el = editor.index.byId[resultId];
     editorAddEl(el, position.x, position.y);
+    Sound.play('new');
 
     renderEditorSidebar();
     closeDialog(dom.craftDialog);
@@ -1033,12 +1057,14 @@
       dom.craftHint.textContent = 'Введите название нового элемента.';
       dom.craftHint.classList.add('is-error');
       dom.craftName.focus();
+      Sound.play('error');
       return;
     }
     if (CraftFilter.find(name)) {
       dom.craftHint.textContent = 'В названии есть недопустимое слово — выберите другое.';
       dom.craftHint.classList.add('is-error');
       dom.craftName.focus();
+      Sound.play('error');
       return;
     }
     const duplicate = (editor.mode.elements || []).find(
@@ -1047,6 +1073,7 @@
     if (duplicate) {
       dom.craftHint.textContent = `«${duplicate.name}» уже есть в режиме — выберите его на первой вкладке.`;
       dom.craftHint.classList.add('is-error');
+      Sound.play('error');
       return;
     }
     let emoji = dom.craftEmoji.value.trim();
@@ -1068,7 +1095,8 @@
     const key = Modes.pairKey(aId, bId);
     const rule = play.index.byPair[key];
     if (!rule) {
-      toast('❓', 'В этом режиме для такой пары нет правила.');
+      // Без всплывающего уведомления: просто короткий звук неудачи.
+      Sound.play('error');
       return;
     }
 
@@ -1081,8 +1109,10 @@
     if (isNew) {
       play.open[rule.result] = true;
       Storage.savePlayState(play.mode.id, { open: openElements() });
+      Sound.play('new');
       toast('✨', `Новый элемент: ${resultEl.name}`);
     } else {
+      Sound.play('success');
       toast('🔁', `${resultEl.name} уже открыт`);
     }
     setSaveState('Сохранено', 'saved');
@@ -1351,6 +1381,7 @@
     closeDialog(dom.publishDialog);
     setSaveState('Сохранено', 'saved');
     renderLobby();
+    Sound.play(remote.ok ? 'publish' : 'success');
     if (remote.ok) toast('🌐', 'Режим опубликован в каталоге');
     else toast('💾', 'Режим сохранён. В каталоге он появится, когда подключим сервер');
   }
@@ -1386,6 +1417,7 @@
         dom.reportComment.value.trim()
       );
       closeDialog(dom.reportDialog);
+      Sound.play('report');
       if (result.local) {
         toast('🚩', 'Сервер не подключён — жалоба сохранена локально');
       } else {
@@ -1395,6 +1427,7 @@
     } catch (error) {
       dom.reportHint.textContent = 'Не удалось отправить жалобу: ' + error.message;
       dom.reportHint.classList.add('is-error');
+      Sound.play('error');
     } finally {
       dom.reportSend.disabled = false;
     }
@@ -1632,6 +1665,16 @@
     dom.publishConfirm.addEventListener('click', confirmPublish);
     dom.publishCancel.addEventListener('click', () => closeDialog(dom.publishDialog));
 
+    // Звук.
+    if (dom.btnSound) {
+      dom.btnSound.addEventListener('click', () => {
+        Sound.toggle();
+        updateSoundButton();
+      });
+    }
+    document.addEventListener('pointerdown', () => Sound.unlock(), { passive: true });
+    document.addEventListener('keydown', () => Sound.unlock());
+
     // Жалоба.
     dom.reportSend.addEventListener('click', confirmReport);
     dom.reportCancel.addEventListener('click', () => closeDialog(dom.reportDialog));
@@ -1689,6 +1732,7 @@
   function boot() {
     if (window.CraftEmojiPicker) window.CraftEmojiPicker.init();
     bind();
+    updateSoundButton();
     initAdminShortcut();
     renderLobby();
     if (location.hash.startsWith('#share=')) importFromHash();
@@ -1758,4 +1802,5 @@
 
   boot();
 })();
+
 

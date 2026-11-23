@@ -1,0 +1,139 @@
+/* =========================================================
+   Админ-страница жалоб
+   ========================================================= */
+
+.admin-layout {
+  width: min(900px, calc(100vw - 32px));
+  margin: 0 auto;
+  padding: 30px 0 50px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.admin-card {
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--card);
+  box-shadow: var(--shadow-sm);
+}
+
+.admin-card h2 {
+  margin: 0 0 4px;
+  font-size: 20px;
+  letter-spacing: -0.3px;
+}
+
+.admin-card h2 .panel-count {
+  margin-left: 6px;
+  vertical-align: 3px;
+}
+
+.admin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 420px;
+  margin-top: 14px;
+}
+
+.admin-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.admin-head .btn { margin-left: auto; }
+
+.report-list {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.report-card {
+  padding: 13px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fffdf8;
+}
+
+.report-card.is-resolved { opacity: 0.65; }
+
+.report-top {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+
+.report-mode {
+  font-size: 15px;
+  font-weight: 750;
+  letter-spacing: -0.2px;
+}
+
+.report-status {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #fff3d9;
+  color: #9a6a12;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.report-status.is-resolved { background: #e6f6ec; color: #237a46; }
+
+.report-reason {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #eeeaff;
+  color: var(--accent-deep);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.report-date {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+
+.report-comment {
+  margin: 7px 0;
+  font-size: 13px;
+  color: var(--ink);
+  white-space: pre-wrap;
+}
+
+.report-meta {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+
+.report-meta .btn { margin-left: auto; }
+
+.report-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.report-actions .btn { margin-left: 0; }
+
+@media (max-width: 600px) {
+  .admin-layout { padding: 16px 0 30px; }
+  .admin-card { padding: 15px; }
+  .report-date { width: 100%; margin-left: 0; }
+}

@@ -35,6 +35,16 @@
 
   let token = sessionStorage.getItem(TOKEN_KEY) || '';
   let reports = [];
+  let currentEmail = token ? tokenEmail(token) : '';
+
+  function tokenEmail(value) {
+    try {
+      const payload = JSON.parse(atob(String(value).split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+      return payload.email || '';
+    } catch {
+      return '';
+    }
+  }
 
   function toast(icon, text) {
     if (!dom.toasts) return;
@@ -80,6 +90,7 @@
       throw new Error(data.error_description || data.msg || 'Неверный email или пароль');
     }
     token = data.access_token;
+    currentEmail = (data.user && data.user.email) || email;
     sessionStorage.setItem(TOKEN_KEY, token);
   }
 
@@ -101,6 +112,35 @@
       throw new Error(data.message || 'HTTP ' + res.status);
     }
     return res;
+  }
+
+  async function ensureAdmin() {
+    dom.reportsHint.textContent = 'Проверяем доступ…';
+    dom.reportsHint.classList.remove('is-error');
+    try {
+      const res = await api('rpc/is_admin', { method: 'POST', body: '{}' });
+      const isAdmin = await res.json();
+      if (isAdmin !== true) {
+        const email = currentEmail || 'ТВОЙ_EMAIL';
+        reportsError(
+          `Аккаунт «${email}» не добавлен в админы. Выполни в SQL Editor: ` +
+          `insert into public.admins (user_id) select id from auth.users where email = '${email}';`
+        );
+        return false;
+      }
+      dom.reportsHint.textContent = '';
+      return true;
+    } catch (error) {
+      // Старая схема без is_admin: работаем по политикам authenticated.
+      if (/could not find|not found|404/i.test(error.message)) {
+        dom.reportsHint.textContent = '';
+        return true;
+      }
+      if (error.message !== 'Нужен вход') {
+        reportsError('Не удалось проверить доступ администратора: ' + error.message);
+      }
+      return false;
+    }
   }
 
   async function loadReports() {
@@ -258,7 +298,7 @@
         await login(dom.email.value.trim(), dom.password.value);
         dom.password.value = '';
         showReports();
-        await loadReports();
+        if (await ensureAdmin()) await loadReports();
       } catch (error) {
         dom.loginHint.textContent = error.message;
         dom.loginHint.classList.add('is-error');
@@ -271,11 +311,13 @@
       dom.loginHint.classList.remove('is-error');
       dom.loginHint.textContent = 'Вы вышли.';
     });
-    dom.refreshBtn.addEventListener('click', loadReports);
+    dom.refreshBtn.addEventListener('click', async () => {
+      if (await ensureAdmin()) await loadReports();
+    });
 
     if (token) {
       showReports();
-      await loadReports();
+      if (await ensureAdmin()) await loadReports();
     }
   }
 

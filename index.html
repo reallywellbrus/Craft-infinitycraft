@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Craft Modes — создавайте собственные режимы Infinite Craft и играйте в режимы других игроков.">
+  <title>Craft Modes — свои режимы Infinite Craft</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧩</text></svg>">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <header class="topbar">
+    <a class="brand" href="#/" id="brandLink">
+      <span class="brand-logo" aria-hidden="true">∞</span>
+      <span class="brand-text">
+        <h1>Craft Modes <span class="mode-label" id="modeBadge">свои режимы</span></h1>
+        <p>мастерская бесконечности</p>
+      </span>
+    </a>
+
+    <div class="stats" id="topStats" aria-label="Статистика режима" hidden>
+      <div class="stat" title="Всего элементов в режиме">
+        <span aria-hidden="true">🧪</span>
+        <b id="statElements">4</b>
+        <small>элементов</small>
+      </div>
+      <div class="stat" title="Правил крафта">
+        <span aria-hidden="true">🔗</span>
+        <b id="statRules">0</b>
+        <small>правил</small>
+      </div>
+    </div>
+
+    <span class="spacer"></span>
+
+    <button class="save-pill" id="savePill" type="button" title="Сохранить сейчас">
+      <span class="save-dot" id="saveDot"></span>
+      <span id="saveText">Локально</span>
+    </button>
+
+    <div class="actions">
+      <button class="btn" id="btnLobby" type="button" hidden>← Все режимы</button>
+      <button class="btn" id="btnRecipes" type="button" title="Рецепты режима" hidden>
+        <span aria-hidden="true">📖</span><span class="btn-label">Рецепты</span>
+      </button>
+      <button class="btn btn--primary" id="btnCreate" type="button">＋ Создать режим</button>
+      <button class="btn btn--icon" id="btnMenu" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="menu" title="Меню" aria-label="Меню">⋯</button>
+    </div>
+  </header>
+
+  <!-- ================= главная ================= -->
+  <main class="screen" id="screenLobby">
+    <div class="lobby">
+      <div class="hero">
+        <h1>Придумай свой Infinite Craft</h1>
+        <p>
+          Начни с четырёх стихий и реши, что получится из каждой пары. Добавь свои элементы и эмодзи,
+          назови режим — и в него смогут сыграть другие.
+        </p>
+      </div>
+
+      <div class="lobby-actions">
+        <button class="btn btn--primary" id="btnCreate2" type="button">＋ Создать режим</button>
+        <button class="btn" id="btnImport" type="button">📥 Загрузить режим файлом</button>
+        <input type="file" id="fileInput" accept="application/json,.json" hidden>
+      </div>
+
+      <h2 class="section-title">Мои режимы <small id="myCount"></small></h2>
+      <div class="mode-grid" id="myModes"></div>
+      <div class="empty-note" id="myEmpty" hidden>Пока нет своих режимов. Нажмите «Создать режим» — это займёт пару минут.</div>
+
+      <h2 class="section-title" style="margin-top: 30px">Каталог <small id="catalogCount"></small></h2>
+      <label class="search catalog-search">
+        <span aria-hidden="true">🔎</span>
+        <input id="catalogSearch" type="search" placeholder="Найти режим по названию или автору…" autocomplete="off" spellcheck="false">
+      </label>
+      <div class="mode-grid" id="catalogModes"></div>
+      <div class="empty-note" id="catalogEmpty" hidden>Каталог пуст. Скоро здесь появятся режимы других игроков.</div>
+    </div>
+  </main>
+
+  <!-- ================= редактор режима ================= -->
+  <main class="screen workspace" id="screenEditor" hidden>
+    <section class="board-column">
+      <div class="board-toolbar">
+        <span class="mode-pill"><span aria-hidden="true">✏️</span><span class="name" id="editorTitle">Новый режим</span></span>
+        <p class="board-tip"><span aria-hidden="true">🖱️</span> Перетащите элемент на другой — или выберите два по очереди</p>
+        <div class="board-tools">
+          <span class="board-counter" id="editorBoardCount">4 на столе</span>
+          <button class="btn btn--tiny" id="btnClearEditor" type="button">🧹 Очистить</button>
+          <button class="btn btn--primary btn--small" id="btnSaveMode" type="button">💾 Сохранить</button>
+        </div>
+      </div>
+      <div class="board" id="editorBoard">
+        <div class="board-empty" id="editorEmpty">
+          <div class="board-empty-art" aria-hidden="true">✦</div>
+          <p>Стол пуст</p>
+          <span>Перетащите элемент из панели или нажмите на него</span>
+        </div>
+      </div>
+    </section>
+
+    <aside class="panel" aria-label="Элементы режима">
+      <div class="panel-head">
+        <span>Элементы</span>
+        <span class="panel-count" id="editorCount">4</span>
+      </div>
+      <label class="search">
+        <span aria-hidden="true">🔎</span>
+        <input id="editorSearch" type="search" placeholder="Найти элемент…" autocomplete="off" spellcheck="false">
+      </label>
+      <div class="elements-list" id="editorList"></div>
+      <p class="panel-hint">Клик — на стол. Соедините два элемента, чтобы получить результат. Alt+соединение — изменить правило.<br>Верните фишку сюда — она уберётся.</p>
+    </aside>
+  </main>
+
+  <!-- ================= игра ================= -->
+  <main class="screen workspace" id="screenPlay" hidden>
+    <section class="board-column">
+      <div class="board-toolbar">
+        <span class="mode-pill"><span aria-hidden="true">🎮</span><span class="name" id="playTitle"></span></span>
+        <p class="board-tip"><span aria-hidden="true">🖱️</span> Перетащите элемент на другой — или выберите два по очереди</p>
+        <div class="board-tools">
+          <span class="stat-pill"><span aria-hidden="true">💡</span><span id="playFound">0</span> / <span id="playTotal">0</span> открыто</span>
+          <span class="board-counter" id="playBoardCount">4 на столе</span>
+          <button class="btn btn--tiny" id="btnClearPlay" type="button">🧹 Очистить</button>
+          <button class="btn btn--small" id="btnPlayRestart" type="button">↺ Заново</button>
+        </div>
+      </div>
+      <div class="board" id="playBoard">
+        <div class="board-empty" id="playEmpty">
+          <div class="board-empty-art" aria-hidden="true">✦</div>
+          <p>Стол пуст</p>
+          <span>Перетащите элемент из панели или нажмите на него</span>
+        </div>
+      </div>
+    </section>
+
+    <aside class="panel" aria-label="Открытые элементы">
+      <div class="panel-head">
+        <span>Открыто</span>
+        <span class="panel-count" id="playCount">4</span>
+      </div>
+      <label class="search">
+        <span aria-hidden="true">🔎</span>
+        <input id="playSearch" type="search" placeholder="Найти элемент…" autocomplete="off" spellcheck="false">
+      </label>
+      <div class="elements-list" id="playList"></div>
+      <p class="panel-hint">Клик — на стол. Тяните элемент на стол или на другой элемент.<br>Верните фишку сюда — она уберётся.</p>
+    </aside>
+  </main>
+
+  <!-- ================= книга рецептов режима ================= -->
+  <dialog class="modal modal--recipes" id="recipesDialog" aria-labelledby="recipesTitle">
+    <div class="modal-head">
+      <div>
+        <h3 id="recipesTitle">Рецепты режима</h3>
+        <p id="recipesSubtitle">Все правила, которые уже созданы</p>
+      </div>
+      <button class="modal-close" type="button" data-close aria-label="Закрыть">✕</button>
+    </div>
+    <div class="modal-body">
+      <label class="search search--modal">
+        <span aria-hidden="true">🔎</span>
+        <input id="recipesSearch" type="search" placeholder="Найти рецепт по элементу…" autocomplete="off" spellcheck="false">
+      </label>
+      <div class="recipe-list" id="recipesList"></div>
+      <p class="recipe-count" id="recipesCount"></p>
+    </div>
+  </dialog>
+
+  <!-- ================= окно крафта ================= -->
+  <dialog class="modal" id="craftDialog" aria-labelledby="craftTitle">
+    <div class="modal-head">
+      <div>
+        <h3 id="craftTitle">Такого элемента ещё нет</h3>
+        <p id="craftSubtitle">Выберите готовый элемент или придумайте новый</p>
+      </div>
+      <button class="modal-close" type="button" data-close aria-label="Закрыть">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="pair" id="craftPair"></div>
+
+      <div class="tabs" role="tablist">
+        <button class="tab is-active" type="button" role="tab" data-tab="existing">Из существующих</button>
+        <button class="tab" type="button" role="tab" data-tab="new">Придумать новый</button>
+      </div>
+
+      <div class="field" id="craftExistingPane">
+        <label class="search">
+          <span aria-hidden="true">🔎</span>
+          <input id="craftSearch" type="search" placeholder="Поиск по элементам режима…" autocomplete="off" spellcheck="false">
+        </label>
+        <div class="chip-list" id="craftExisting"></div>
+      </div>
+
+      <div id="craftNewPane" hidden>
+        <div class="field">
+          <span>Название элемента</span>
+          <input id="craftName" type="text" maxlength="60" placeholder="Например: диван" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="field-row" style="margin-top: 10px">
+          <label class="field field--emoji">
+            <span>Эмодзи</span>
+            <div class="emoji-input">
+              <input id="craftEmoji" type="text" maxlength="16" autocomplete="off">
+              <button class="emoji-button" type="button" data-emoji-for="craftEmoji" title="Открыть клавиатуру эмодзи" aria-label="Выбрать эмодзи">😊</button>
+            </div>
+          </label>
+          <div class="field">
+            <span>Подсказка</span>
+            <div class="hint" id="craftEmojiHint">Эмодзи подберётся сам — его можно заменить.</div>
+          </div>
+        </div>
+      </div>
+
+      <p class="hint" id="craftHint" role="status"></p>
+
+      <div class="mode-actions">
+        <button class="btn btn--primary" type="button" id="craftConfirm">✓ Подтвердить</button>
+        <button class="btn btn--ghost" type="button" id="craftCancel">Отмена</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- ================= публикация / название режима ================= -->
+  <dialog class="modal" id="publishDialog" aria-labelledby="publishTitle">
+    <div class="modal-head">
+      <div>
+        <h3 id="publishTitle">Опубликовать режим</h3>
+        <p>Дайте режиму имя — по нему его найдут другие игроки</p>
+      </div>
+      <button class="modal-close" type="button" data-close aria-label="Закрыть">✕</button>
+    </div>
+    <div class="modal-body">
+      <label class="field">
+        <span>Название</span>
+        <input id="publishName" type="text" maxlength="60" placeholder="Например: Диванная вселенная" autocomplete="off">
+      </label>
+      <label class="field">
+        <span>Описание</span>
+        <textarea id="publishDesc" rows="2" maxlength="200" placeholder="Коротко о правилах режима"></textarea>
+      </label>
+      <label class="field">
+        <span>Эмодзи режима</span>
+        <div class="emoji-input">
+          <input id="publishEmoji" type="text" maxlength="16" autocomplete="off">
+          <button class="emoji-button" type="button" data-emoji-for="publishEmoji" title="Открыть клавиатуру эмодзи" aria-label="Выбрать эмодзи режима">😊</button>
+        </div>
+      </label>
+      <label class="field">
+        <span>Ваше имя</span>
+        <input id="publishAuthor" type="text" maxlength="40" placeholder="Аноним" autocomplete="off">
+      </label>
+      <div class="mode-preview" id="publishPreview"></div>
+      <p class="hint" id="publishHint" role="status"></p>
+      <div class="mode-actions">
+        <button class="btn btn--primary" type="button" id="publishConfirm">🌐 Опубликовать</button>
+        <button class="btn btn--ghost" type="button" id="publishCancel">Отмена</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- ================= клавиатура эмодзи ================= -->
+  <dialog class="modal modal--emoji" id="emojiDialog" aria-labelledby="emojiTitle">
+    <div class="modal-head">
+      <div>
+        <h3 id="emojiTitle">Выберите эмодзи</h3>
+        <p>Поиск по названию или категории</p>
+      </div>
+      <button class="modal-close" type="button" data-close aria-label="Закрыть">✕</button>
+    </div>
+    <div class="modal-body">
+      <label class="search search--modal">
+        <span aria-hidden="true">🔎</span>
+        <input id="emojiSearch" type="search" placeholder="Найти эмодзи: кот, огонь, диван…" autocomplete="off" spellcheck="false">
+      </label>
+      <div class="emoji-tabs" id="emojiTabs"></div>
+      <div class="emoji-grid" id="emojiGrid"></div>
+    </div>
+  </dialog>
+
+  <!-- ================= жалоба на режим ================= -->
+  <dialog class="modal" id="reportDialog" aria-labelledby="reportTitle">
+    <div class="modal-head">
+      <div>
+        <h3 id="reportTitle">Пожаловаться на режим</h3>
+        <p id="reportModeName"></p>
+      </div>
+      <button class="modal-close" type="button" data-close aria-label="Закрыть">✕</button>
+    </div>
+    <div class="modal-body">
+      <label class="field">
+        <span>Причина</span>
+        <select id="reportReason">
+          <option value="bad_words">Ненормативная лексика</option>
+          <option value="spam">Спам или реклама</option>
+          <option value="broken">Сломанный режим</option>
+          <option value="other">Другое</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>Комментарий</span>
+        <textarea id="reportComment" rows="3" maxlength="500" placeholder="Что не так с режимом?"></textarea>
+      </label>
+      <p class="hint" id="reportHint" role="status"></p>
+      <div class="mode-actions">
+        <button class="btn btn--primary" type="button" id="reportSend">🚩 Отправить жалобу</button>
+        <button class="btn btn--ghost" type="button" id="reportCancel">Отмена</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- ================= ошибка / подтверждение ================= -->
+  <dialog class="modal" id="confirmDialog" aria-labelledby="confirmTitle">
+    <div class="modal-head">
+      <div>
+        <h3 id="confirmTitle">Подтвердить?</h3>
+        <p id="confirmText"></p>
+      </div>
+      <button class="modal-close" type="button" data-close aria-label="Закрыть">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="mode-actions">
+        <button class="btn btn--danger" type="button" id="confirmOk">Подтвердить</button>
+        <button class="btn btn--ghost" type="button" id="confirmCancel">Отмена</button>
+      </div>
+    </div>
+  </dialog>
+
+  <div class="menu" id="menu" role="menu" hidden>
+    <button type="button" role="menuitem" data-action="save">💾 Сохранить режим</button>
+    <button type="button" role="menuitem" data-action="publish">🌐 Опубликовать</button>
+    <button type="button" role="menuitem" data-action="recipes">📖 Рецепты режима</button>
+    <button type="button" role="menuitem" data-action="report">🚩 Пожаловаться на режим</button>
+    <button type="button" role="menuitem" data-action="share">🔗 Ссылка на режим</button>
+    <div class="menu-sep"></div>
+    <button type="button" role="menuitem" data-action="clear">🧹 Очистить стол</button>
+    <button type="button" role="menuitem" data-action="restart" class="danger">↺ Начать заново</button>
+    <div class="menu-sep"></div>
+    <button type="button" role="menuitem" data-action="import">📥 Загрузить режим файлом</button>
+    <button type="button" role="menuitem" data-action="lobby">🏠 Все режимы</button>
+  </div>
+
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/filter.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/emoji.js"></script>
+  <script src="js/emoji-picker.js"></script>
+  <script src="js/modes.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
+

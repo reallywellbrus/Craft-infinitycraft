@@ -6,7 +6,7 @@
   <meta name="description" content="Craft Modes — создавайте собственные режимы Infinite Craft и играйте в режимы других игроков.">
   <title>Craft Modes — свои режимы Infinite Craft</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧩</text></svg>">
-  <link rel="stylesheet" href="style.css?v=6">
+  <link rel="stylesheet" href="style.css?v=7">
 </head>
 <body>
 
@@ -278,6 +278,50 @@
     </div>
   </dialog>
 
+  <!-- ================= выбор стартовых элементов ================= -->
+  <dialog class="modal" id="baseDialog" aria-labelledby="baseTitle">
+    <div class="modal-head">
+      <div>
+        <h3 id="baseTitle">С чего начнём?</h3>
+        <p>Выберите четыре стихии или придумайте свои стартовые элементы</p>
+      </div>
+      <button class="modal-close" type="button" data-close aria-label="Закрыть">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="base-choice" id="baseChoice">
+        <button class="base-option" type="button" id="baseStandard">
+          <span class="base-option-emoji">💧🔥💨🌍</span>
+          <span>
+            <b>Четыре стихии</b>
+            <small>Вода, огонь, ветер и земля — как в классическом Infinite Craft</small>
+          </span>
+        </button>
+        <button class="base-option" type="button" id="baseCustom">
+          <span class="base-option-emoji">✨</span>
+          <span>
+            <b>Свои четыре элемента</b>
+            <small>Например: металл, пар, искра и пыль</small>
+          </span>
+        </button>
+      </div>
+
+      <div id="baseCustomPane" hidden>
+        <p class="hint">Введите четыре разных элемента. Эмодзи подберётся автоматически.</p>
+        <div class="base-fields">
+          <label class="field"><span>Первый</span><input id="baseName0" type="text" maxlength="40" placeholder="Например: металл" autocomplete="off"></label>
+          <label class="field"><span>Второй</span><input id="baseName1" type="text" maxlength="40" placeholder="Например: пар" autocomplete="off"></label>
+          <label class="field"><span>Третий</span><input id="baseName2" type="text" maxlength="40" placeholder="Например: искра" autocomplete="off"></label>
+          <label class="field"><span>Четвёртый</span><input id="baseName3" type="text" maxlength="40" placeholder="Например: пыль" autocomplete="off"></label>
+        </div>
+        <p class="hint" id="baseHint" role="status"></p>
+        <div class="mode-actions">
+          <button class="btn btn--primary" type="button" id="baseStart">Создать режим</button>
+          <button class="btn btn--ghost" type="button" id="baseBack">← Назад</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
   <!-- ================= жалоба на режим ================= -->
   <dialog class="modal" id="reportDialog" aria-labelledby="reportTitle">
     <div class="modal-head">
@@ -342,14 +386,14 @@
 
   <div class="toasts" id="toasts" aria-live="polite"></div>
 
-  <script src="config.js?v=6"></script>
-  <script src="filter.js?v=6"></script>
-  <script src="storage.js?v=6"></script>
-  <script src="emoji.js?v=6"></script>
-  <script src="emoji-picker.js?v=6"></script>
-  <script src="sound.js?v=6"></script>
-  <script src="modes.js?v=6"></script>
-  <script src="app.js?v=6"></script>
+  <script src="config.js?v=7"></script>
+  <script src="filter.js?v=7"></script>
+  <script src="storage.js?v=7"></script>
+  <script src="emoji.js?v=7"></script>
+  <script src="emoji-picker.js?v=7"></script>
+  <script src="sound.js?v=7"></script>
+  <script src="modes.js?v=7"></script>
+  <script src="app.js?v=7"></script>
 </body>
 </html>
 

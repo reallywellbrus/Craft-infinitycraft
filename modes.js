@@ -45,7 +45,28 @@ var CraftModes = (function () {
     });
   }
 
-  function emptyMode() {
+  function normalizeBase(input) {
+    var source = Array.isArray(input) && input.length ? input : BASE_DEFAULTS;
+    var out = [];
+    var seen = Object.create(null);
+    for (var i = 0; i < 4; i++) {
+      var fallback = BASE_DEFAULTS[i];
+      var el = source[i] || fallback;
+      var id = String(el.id || uid('base'));
+      if (seen[id]) id = id + '-' + (i + 1);
+      seen[id] = true;
+      out.push({
+        id: id,
+        name: String(el.name || fallback.name).slice(0, 60),
+        emoji: String(el.emoji || fallback.emoji).slice(0, 8),
+        hue: Number(el.hue) || fallback.hue,
+        base: true,
+      });
+    }
+    return out;
+  }
+
+  function emptyMode(base) {
     return {
       id: uid('mode'),
       name: '',
@@ -55,7 +76,7 @@ var CraftModes = (function () {
       hue: 260,
       createdAt: Date.now(),
       updatedAt: Date.now(),
-      base: baseElements(),
+      base: normalizeBase(base),
       elements: [],
       rules: [],
     };
@@ -93,7 +114,7 @@ var CraftModes = (function () {
       createdAt: Number(mode.createdAt) || Date.now(),
       updatedAt: Number(mode.updatedAt) || Date.now(),
       likes: Number(mode.likes) || 0,
-      base: baseElements(),
+      base: normalizeBase(mode.base),
       elements: [],
       rules: [],
     };
@@ -175,6 +196,7 @@ var CraftModes = (function () {
       author: raw.author || '',
       emoji: raw.emoji || '🧩',
       hue: raw.hue || 260,
+      base: raw.base,
       elements: elements,
       rules: rules,
     });
@@ -206,6 +228,7 @@ var CraftModes = (function () {
     pairKey: pairKey,
     slug: slug,
     baseElements: baseElements,
+    normalizeBase: normalizeBase,
     emptyMode: emptyMode,
     buildIndex: buildIndex,
     allElements: allElements,

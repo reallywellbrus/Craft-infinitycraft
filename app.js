@@ -102,6 +102,19 @@
     reportSend: $('reportSend'),
     reportCancel: $('reportCancel'),
 
+    baseDialog: $('baseDialog'),
+    baseChoice: $('baseChoice'),
+    baseStandard: $('baseStandard'),
+    baseCustom: $('baseCustom'),
+    baseCustomPane: $('baseCustomPane'),
+    baseName0: $('baseName0'),
+    baseName1: $('baseName1'),
+    baseName2: $('baseName2'),
+    baseName3: $('baseName3'),
+    baseHint: $('baseHint'),
+    baseStart: $('baseStart'),
+    baseBack: $('baseBack'),
+
     confirmDialog: $('confirmDialog'),
     confirmTitle: $('confirmTitle'),
     confirmText: $('confirmText'),
@@ -350,9 +363,11 @@
       mark.textContent = '+';
       item.append(emoji, label, mark);
       item.addEventListener('click', () => {
+        if (item.dataset.dragged === '1') return;
         const rect = dom.editorBoard.getBoundingClientRect();
         editorAddEl(el, rect.width * 0.3 + Math.random() * rect.width * 0.4, rect.height * 0.3 + Math.random() * rect.height * 0.4);
       });
+      bindPanelDrag(item, 'editor', el, (x, y) => editorAddEl(el, x, y));
       frag.append(item);
     }
     dom.editorList.append(frag);
@@ -671,9 +686,11 @@
       mark.textContent = '+';
       item.append(emoji, label, mark);
       item.addEventListener('click', () => {
+        if (item.dataset.dragged === '1') return;
         const rect = dom.playBoard.getBoundingClientRect();
         playAddEl(id, rect.width * 0.3 + Math.random() * rect.width * 0.4, rect.height * 0.3 + Math.random() * rect.height * 0.4);
       });
+      bindPanelDrag(item, 'play', el, (x, y) => playAddEl(id, x, y));
       frag.append(item);
     }
     dom.playList.append(frag);
@@ -697,6 +714,79 @@
       ? document.querySelector('#screenEditor .panel')
       : document.querySelector('#screenPlay .panel');
   }
+
+  function bindPanelDrag(item, which, el, addAt) {
+    let drag = null;
+
+    function ghostFor(x, y) {
+      const ghost = document.createElement('span');
+      ghost.className = 'panel-drag-ghost';
+      const emoji = document.createElement('span');
+      emoji.className = 'panel-drag-emoji';
+      emoji.textContent = el.emoji || '✨';
+      const name = document.createElement('span');
+      name.textContent = el.name;
+      ghost.append(emoji, name);
+      ghost.style.left = x + 'px';
+      ghost.style.top = y + 'px';
+      document.body.append(ghost);
+      return ghost;
+    }
+
+    function finish(event, cancelled) {
+      if (!drag) return;
+      const active = drag.active;
+      const ghost = drag.ghost;
+      const board = boardOf(which);
+      drag = null;
+      if (ghost) ghost.remove();
+      document.body.classList.remove('is-panel-dragging');
+      item.classList.remove('is-dragging-from-panel');
+      board.classList.remove('is-drop-target');
+      try { item.releasePointerCapture(event.pointerId); } catch { /* ignore */ }
+
+      if (active) setTimeout(() => { delete item.dataset.dragged; }, 80);
+      if (!active || cancelled) return;
+      const rect = board.getBoundingClientRect();
+      const x = event.clientX;
+      const y = event.clientY;
+      if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) return;
+      const px = Math.max(0, Math.min(rect.width - 40, x - rect.left - 30));
+      const py = Math.max(0, Math.min(rect.height - 30, y - rect.top - 18));
+      addAt(px, py);
+      Sound.play('add');
+    }
+
+    item.addEventListener('pointerdown', (event) => {
+      if (event.button !== 0) return;
+      drag = { x: event.clientX, y: event.clientY, pointerId: event.pointerId, active: false, ghost: null };
+      try { item.setPointerCapture(event.pointerId); } catch { /* ignore */ }
+    });
+
+    item.addEventListener('pointermove', (event) => {
+      if (!drag || event.pointerId !== drag.pointerId) return;
+      if (!drag.active) {
+        if (Math.hypot(event.clientX - drag.x, event.clientY - drag.y) < 8) return;
+        drag.active = true;
+        item.dataset.dragged = '1';
+        drag.ghost = ghostFor(event.clientX, event.clientY);
+        document.body.classList.add('is-panel-dragging');
+        item.classList.add('is-dragging-from-panel');
+      }
+      event.preventDefault();
+      drag.ghost.style.left = event.clientX + 'px';
+      drag.ghost.style.top = event.clientY + 'px';
+      const rect = boardOf(which).getBoundingClientRect();
+      boardOf(which).classList.toggle(
+        'is-drop-target',
+        event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom
+      );
+    });
+
+    item.addEventListener('pointerup', (event) => finish(event, false));
+    item.addEventListener('pointercancel', (event) => finish(event, true));
+  }
+
 
   function pointInRect(x, y, rect) {
     return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
@@ -1394,6 +1484,67 @@
     else toast('💾', 'Режим сохранён. В каталоге он появится, когда подключим сервер');
   }
 
+  function openBaseDialog() {
+    dom.baseChoice.hidden = false;
+    dom.baseCustomPane.hidden = true;
+    dom.baseHint.textContent = '';
+    dom.baseHint.classList.remove('is-error');
+    [dom.baseName0, dom.baseName1, dom.baseName2, dom.baseName3].forEach((input) => {
+      input.value = '';
+    });
+    openDialog(dom.baseDialog);
+  }
+
+  function startStandardMode() {
+    closeDialog(dom.baseDialog);
+    startEditor(Modes.emptyMode());
+  }
+
+  function showCustomBase() {
+    dom.baseChoice.hidden = true;
+    dom.baseCustomPane.hidden = false;
+    dom.baseHint.textContent = '';
+    dom.baseHint.classList.remove('is-error');
+    setTimeout(() => dom.baseName0.focus(), 60);
+  }
+
+  function startCustomMode() {
+    const names = [dom.baseName0, dom.baseName1, dom.baseName2, dom.baseName3]
+      .map((input) => input.value.trim().replace(/\s+/g, ' '));
+    if (names.some((name) => !name)) {
+      dom.baseHint.textContent = 'Заполните все четыре названия.';
+      dom.baseHint.classList.add('is-error');
+      CraftSound.play('error');
+      return;
+    }
+    const seen = new Set();
+    for (const name of names) {
+      const key = Emoji.normalize(name);
+      if (seen.has(key)) {
+        dom.baseHint.textContent = 'Названия должны быть разными.';
+        dom.baseHint.classList.add('is-error');
+        CraftSound.play('error');
+        return;
+      }
+      seen.add(key);
+      if (CraftFilter.find(name)) {
+        dom.baseHint.textContent = 'В названии есть недопустимое слово.';
+        dom.baseHint.classList.add('is-error');
+        CraftSound.play('error');
+        return;
+      }
+    }
+    const base = names.map((name) => ({
+      id: Modes.uid('base'),
+      name,
+      emoji: Emoji.pick(name),
+      hue: Emoji.hue(name),
+      base: true,
+    }));
+    closeDialog(dom.baseDialog);
+    startEditor(Modes.emptyMode(base));
+  }
+
   /* ---------------- обмен ссылкой и файлом ---------------- */
 
   let reporting = null;
@@ -1551,8 +1702,15 @@
      ========================================================= */
 
   function bind() {
-    dom.btnCreate.addEventListener('click', () => startEditor(Modes.emptyMode()));
-    dom.btnCreate2.addEventListener('click', () => startEditor(Modes.emptyMode()));
+    dom.btnCreate.addEventListener('click', openBaseDialog);
+    dom.btnCreate2.addEventListener('click', openBaseDialog);
+    dom.baseStandard.addEventListener('click', startStandardMode);
+    dom.baseCustom.addEventListener('click', showCustomBase);
+    dom.baseStart.addEventListener('click', startCustomMode);
+    dom.baseBack.addEventListener('click', () => {
+      dom.baseChoice.hidden = false;
+      dom.baseCustomPane.hidden = true;
+    });
     dom.btnLobby.addEventListener('click', () => {
       if (editor.mode) { /* можно потом спросить про несохранённое */ }
       showScreen('lobby');

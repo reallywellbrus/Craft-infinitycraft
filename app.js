@@ -18,6 +18,7 @@
 
   const dom = {
     brandLink: $('brandLink'),
+    brandSubtitle: $('brandSubtitle'),
     btnLobby: $('btnLobby'),
     btnCreate: $('btnCreate'),
     btnCreate2: $('btnCreate2'),
@@ -52,17 +53,14 @@
     catalogCount: $('catalogCount'),
     catalogSearch: $('catalogSearch'),
 
-    editorTitle: $('editorTitle'),
     editorBoard: $('editorBoard'),
     editorEmpty: $('editorEmpty'),
     editorList: $('editorList'),
     editorCount: $('editorCount'),
     editorBoardCount: $('editorBoardCount'),
     editorSearch: $('editorSearch'),
-    btnSaveMode: $('btnSaveMode'),
     btnClearEditor: $('btnClearEditor'),
 
-    playTitle: $('playTitle'),
     playFound: $('playFound'),
     playTotal: $('playTotal'),
     playBoard: $('playBoard'),
@@ -71,7 +69,6 @@
     playCount: $('playCount'),
     playBoardCount: $('playBoardCount'),
     playSearch: $('playSearch'),
-    btnPlayRestart: $('btnPlayRestart'),
     btnClearPlay: $('btnClearPlay'),
 
     craftDialog: $('craftDialog'),
@@ -181,6 +178,17 @@
     if (!dom.screenEditor.hidden || !dom.screenPlay.hidden) setSaveState('Черновик', 'dirty');
   }
 
+  function updateBrandSubtitle() {
+    if (!dom.brandSubtitle) return;
+    if (!dom.screenEditor.hidden) {
+      dom.brandSubtitle.textContent = (editor.mode && editor.mode.name) || 'Новый режим';
+    } else if (!dom.screenPlay.hidden) {
+      dom.brandSubtitle.textContent = (play.mode && play.mode.name) || 'Режим';
+    } else {
+      dom.brandSubtitle.textContent = 'мастерская бесконечности';
+    }
+  }
+
   function showScreen(name) {
     document.body.dataset.screen = name;
     dom.screenLobby.hidden = name !== 'lobby';
@@ -194,6 +202,7 @@
     if (dom.modeBadge) {
       dom.modeBadge.textContent = name === 'editor' ? 'редактор' : name === 'play' ? 'игра' : 'свои режимы';
     }
+    updateBrandSubtitle();
     if (name === 'lobby') {
       setSaveState('Локально', 'local');
       closeMenu();
@@ -280,7 +289,6 @@
     editor.selected = null;
     editor.search = '';
     dom.editorSearch.value = '';
-    dom.editorTitle.textContent = mode.name || 'Новый режим';
     dom.editorEmpty.hidden = true;
     renderEditorSidebar();
     updateEditorStats();
@@ -424,7 +432,6 @@
     play.selected = null;
     play.search = '';
     dom.playSearch.value = '';
-    dom.playTitle.textContent = mode.name || 'Режим';
     dom.playEmpty.hidden = false;
     dom.playTotal.textContent = String(reach.count);
     renderPlaySidebar();
@@ -1380,6 +1387,7 @@
 
     closeDialog(dom.publishDialog);
     setSaveState('Сохранено', 'saved');
+    updateBrandSubtitle();
     renderLobby();
     Sound.play(remote.ok ? 'publish' : 'success');
     if (remote.ok) toast('🌐', 'Режим опубликован в каталоге');
@@ -1532,7 +1540,7 @@
     }
     Storage.upsertMode(clean);
     editor.mode = clean;
-    dom.editorTitle.textContent = clean.name;
+    updateBrandSubtitle();
     setSaveState('Сохранено', 'saved');
     toast('💾', 'Режим сохранён');
     renderLobby();
@@ -1623,14 +1631,6 @@
     });
 
     // Какой раздел версии открыть по хешу.
-    dom.btnSaveMode.addEventListener('click', saveModeFromEditor);
-
-    dom.btnPlayRestart.addEventListener('click', () => {
-      if (!play.mode) return;
-      Storage.clearPlayState(play.mode.id);
-      startPlay(play.mode);
-      toast('↺', 'Режим начат заново');
-    });
 
     // Окно крафта.
     document.querySelectorAll('#craftDialog .tab').forEach((btn) => {

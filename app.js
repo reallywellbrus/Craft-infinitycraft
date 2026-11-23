@@ -182,11 +182,12 @@
   }
 
   function showScreen(name) {
+    document.body.dataset.screen = name;
     dom.screenLobby.hidden = name !== 'lobby';
     dom.screenEditor.hidden = name !== 'editor';
     dom.screenPlay.hidden = name !== 'play';
     dom.btnLobby.hidden = name === 'lobby';
-    dom.btnCreate.hidden = name === 'editor';
+    dom.btnCreate.hidden = name !== 'lobby';
     const ownCurrent = name === 'editor' || (name === 'play' && isOwnMode(play.mode));
     dom.btnRecipes.hidden = name === 'lobby' || (name === 'play' && !ownCurrent);
     dom.topStats.hidden = name === 'lobby';
